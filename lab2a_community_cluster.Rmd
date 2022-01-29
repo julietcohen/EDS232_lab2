@@ -7,6 +7,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Learning Objectives
+
 ### In this lab, you will play with unsupervised classification techniques while working with ecological community datasets.
 
 - Comparing species counts between sites using distance metrics:

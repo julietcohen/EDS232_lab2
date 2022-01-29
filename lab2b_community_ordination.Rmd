@@ -1,0 +1,221 @@
+---
+title: "lab2b_community_ordination"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning Objectives {.unnumbered}
+
+In this lab, you will play with **unsupervised classification** techniques while working with **ecological community** datasets.
+
+- **Ordination** orders sites near each other based on similarity. It is a multivariate analysis technique used to effectively collapse dependent axes into fewer dimensions, i.e. dimensionality reduction.
+
+  - **Principal Components Analyses (PCA)** is the most common and oldest technique that assumes linear relationships between axes. You will follow a non-ecological example from [Chapter 17 Principal Components Analysis | Hands-On Machine Learning with R](https://bradleyboehmke.github.io/HOML/pca.html) to learn about this commonly used technique.
+
+  - **Non-metric MultiDimensional Scaling (NMDS)** allows for non-linear relationships. This ordination technique is implemented in the R package [`vegan`](https://cran.r-project.org/web/packages/vegan/index.html). You'll use an ecological dataset, species and environment from lichen pastures that reindeer forage upon, with excerpts from the [vegantutor vignette](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf) ([source](https://github.com/jarioksa/vegandocs)) to apply these techniques:
+    - **Unconstrained ordination** on species using NMDS;
+    - Overlay with environmental gradients; and
+    - **Constrained ordination** on species and environmnent using another ordination technique, **canonical correspondence analysis (CCA)**.
+
+Ordination
+
+## Principal Components Analysis (PCA)
+
+Although this example uses a non-ecological dataset, it goes through the materials walk through the idea and procedure of conducting an ordination using the most widespread technique.
+
+Please read the entirety of [Chapter 17 Principal Components Analysis | Hands-On Machine Learning with R](https://bradleyboehmke.github.io/HOML/pca.html#finding-principal-components). Supporting text is mentioned below where code is run.
+
+### Prerequisites
+
+See supporting text: [17.1 Prerequisites](https://bradleyboehmke.github.io/HOML/pca.html#prerequisites-14)
+
+```{r}
+# load R packages
+librarian::shelf(
+  dplyr, ggplot2, h2o)
+
+# set seed for reproducible results
+set.seed(42)
+
+# get data
+url <- "https://koalaverse.github.io/homlr/data/my_basket.csv"
+my_basket <- readr::read_csv(url)
+dim(my_basket)
+
+my_basket
+```
+
+From [Section 1.4](https://bradleyboehmke.github.io/HOML/intro.html#data):
+
+- `my_basket.csv`: Grocery items and quantities purchased. Each observation represents a single basket of goods that were purchased together.
+  * Problem type: unsupervised basket analysis
+  * response variable: NA
+  * features: 42
+  * observations: 2,000
+  * objective: use attributes of each basket to identify common groupings of items purchased together.
+
+### Performing PCA in R
+
+See supporting text: [17.4 Performing PCA in R](https://bradleyboehmke.github.io/HOML/pca.html#performing-pca-in-r)
+
+```{r}
+h2o.no_progress()  # turn off progress bars for brevity
+h2o.init(max_mem_size = "5g")  # connect to H2O instance
+
+# convert data to h2o object
+my_basket.h2o <- as.h2o(my_basket)
+
+# run PCA
+my_pca <- h2o.prcomp(
+  training_frame = my_basket.h2o,
+  pca_method = "GramSVD",
+  k = ncol(my_basket.h2o),
+  transform = "STANDARDIZE",
+  impute_missing = TRUE,
+  max_runtime_secs = 1000)
+my_pca
+
+my_pca@model$eigenvectors %>%
+  as.data.frame() %>%
+  mutate(feature = row.names(.)) %>%
+  ggplot(aes(pc1, reorder(feature, pc1))) +
+  geom_point()
+
+my_pca@model$eigenvectors %>%
+  as.data.frame() %>%
+  mutate(feature = row.names(.)) %>%
+  ggplot(aes(pc1, pc2, label = feature)) +
+  geom_text()
+```
+
+### Eigenvalue criterion
+
+See supporting text: [17.5.1 Eigenvalue criterion](https://bradleyboehmke.github.io/HOML/pca.html#eigenvalue-criterion).
+
+
+```{r}
+# Compute eigenvalues
+eigen <- my_pca@model$importance["Standard deviation", ] %>%
+  as.vector() %>%
+  .^2
+
+# Sum of all eigenvalues equals number of variables
+sum(eigen)
+## [1] 42
+
+# Find PCs where the sum of eigenvalues is greater than or equal to 1
+which(eigen >= 1)
+
+# Extract PVE and CVE
+ve <- data.frame(
+  PC  = my_pca@model$importance %>% seq_along(),
+  PVE = my_pca@model$importance %>% .[2,] %>% unlist(),
+  CVE = my_pca@model$importance %>% .[3,] %>% unlist())
+
+# Plot PVE and CVE
+ve %>%
+  tidyr::gather(metric, variance_explained, -PC) %>%
+  ggplot(aes(PC, variance_explained)) +
+  geom_point() +
+  facet_wrap(~ metric, ncol = 1, scales = "free")
+
+# How many PCs required to explain at least 75% of total variability
+min(which(ve$CVE >= 0.75))
+
+# Screee plot criterion
+data.frame(
+  PC  = my_pca@model$importance %>% seq_along,
+  PVE = my_pca@model$importance %>% .[2,] %>% unlist()) %>%
+  ggplot(aes(PC, PVE, group = 1, label = PC)) +
+  geom_point() +
+  geom_line() +
+  geom_text(nudge_y = -.002)
+```
+
+
+## Non-metric MultiDimensional Scaling (NMDS)
+
+### Unconstrained Ordination on Species
+
+See supporting text: **2.1 Non-metric Multidimensional scaling** in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
+
+```{r}
+# load R packages
+librarian::shelf(
+  vegan, vegan3d)
+
+# vegetation and environment in lichen pastures from Vare et al (1995)
+data("varespec") # species
+data("varechem") # chemistry
+
+varespec %>% tibble()
+vare.dis <- vegdist(varespec)
+vare.mds0 <- monoMDS(vare.dis)
+stressplot(vare.mds0)
+
+ordiplot(vare.mds0, type = "t")
+
+vare.mds <- metaMDS(varespec, trace = FALSE)
+vare.mds
+
+plot(vare.mds, type = "t")
+```
+
+
+### Overlay with Environment
+
+See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
+  * 3 Environmental interpretation
+  * 3.1 Vector fitting
+  * 3.2 Surface fitting
+
+```{r}
+ef <- envfit(vare.mds, varechem, permu = 999)
+ef
+
+plot(vare.mds, display = "sites")
+plot(ef, p.max = 0.05)
+
+
+ef <- envfit(vare.mds ~ Al + Ca, data = varechem)
+plot(vare.mds, display = "sites")
+plot(ef)
+
+tmp <- with(varechem, ordisurf(vare.mds, Al, add = TRUE))
+ordisurf(vare.mds ~ Ca, data=varechem, add = TRUE, col = "green4")
+```
+
+
+### Constrained Ordination on Species and Environment
+
+See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
+  * 4 Constrained ordination
+  * 4.1 Model specification
+
+Technically, this uses another technique `cca`, or canonical correspondence analysis.
+
+```{r}
+# ordinate on species constrained by three soil elements
+vare.cca <- cca(varespec ~ Al + P + K, varechem)
+vare.cca
+
+# plot ordination
+plot(vare.cca)
+
+# plot 3 dimensions
+ordiplot3d(vare.cca, type = "h")
+
+if (interactive()){
+  ordirgl(vare.cca)
+}
+```
+
+
+
+
+
+
+
