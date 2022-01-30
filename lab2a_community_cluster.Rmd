@@ -18,12 +18,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Clustering
 
-- K-Means clustering with function kmeans() given a pre-assigned number of clusters assigns membership centroid based on reducing within cluster variation.
+K-Means clustering with function kmeans() given a pre-assigned number of clusters assigns membership centroid based on reducing within cluster variation.
 - Voronoi diagrams visualizes regions to nearest points, useful here to show membership of nodes to nearest centroid.
 Hierarchical clustering allows for a non-specific number of clusters.
 - Agglomerative hierarchical clustering, such as with diana(), agglomerates as it builds the tree. It is good at identifying small clusters.
 - Divisive hierarchical clustering, such as with agnes(), divides as it builds the tree. It is good at identifying large clusters.
 - Dendrograms visualize the branching tree.
+Ordination (coming Monday)
 
 ## 1 Clustering
 
@@ -34,8 +35,9 @@ Source: [K Means Clustering in R | DataScience+](https://datascienceplus.com/k-m
 
 In k-means clustering, the number of clusters needs to be specified. The algorithm randomly assigns each observation to a cluster, and finds the centroid of each cluster. Then, the algorithm iterates through two steps:
 
-Reassign data points to the cluster whose centroid is closest.
-Calculate new centroid of each cluster.
+1. Reassign data points to the cluster whose centroid is closest.
+1. Calculate new centroid of each cluster.
+
 These two steps are repeated until the within cluster variation cannot be reduced any further. The within cluster variation is calculated as the sum of the euclidean distance between the data points and their respective cluster centroids.
 
 #### 1.1.1 Load and plot the iris dataset
@@ -43,7 +45,7 @@ These two steps are repeated until the within cluster variation cannot be reduce
 ```{r}
 # load R packages
 librarian::shelf(
-  dplyr, DT, ggplot2, tibble)
+  dplyr, DT, ggplot2, skimr, tibble)
 
 # set seed for reproducible results
 set.seed(42)
@@ -58,8 +60,17 @@ if (interactive())
 # show data table
 datatable(iris)
 ```
+
+```{r}
+# skim the table for a summary
+skim(iris)
+```
+
  
 ```{r}
+# remove the rows with NAs
+penguins <- na.omit(iris)
+
 # plot petal length vs width, species naive
 ggplot(
   iris, aes(Petal.Length, Petal.Width)) +
@@ -98,7 +109,7 @@ table(iris_k$cluster, iris$Species)
 ```
 Question: How many observations could be considered “misclassified” if expecting petal length and width to differentiate between species?
 
-**__ observations could be considered "misclassified" if we expect petal length and width to differentiate between species.**
+**6 observations could be considered "misclassified" if we expect petal length and width to differentiate between species.**
 
 ```{r}
 # extract cluster assignment per observation
@@ -111,11 +122,12 @@ ggplot(iris, aes(Petal.Length, Petal.Width, color = Cluster)) +
 
 #### 1.1.3 Plot Voronoi diagram of clustered iris
 
-This form of clustering assigns points to the cluster based on nearest centroid. You can see the breaks more clearly with a Voronoi diagram.
+This form of clustering assigns points to the cluster based on nearest centroid. You can see the breaks more clearly with a [Voronoi diagram.](https://en.wikipedia.org/wiki/Voronoi_diagram)
 
 ```{r}
 librarian::shelf(ggvoronoi, scales)
 
+# this tribble part differs from the penguins code:
 # define bounding box for geom_voronoi()
 box <- tribble(
   ~Petal.Length, ~Petal.Width, ~group,
@@ -154,15 +166,60 @@ ggplot(iris, aes(Petal.Length, Petal.Width, color = Cluster)) +
 Task: Show the Voronoi diagram for fewer (k=2) and more (k=8) clusters to see how assignment to cluster centroids work.
 
 ```{r}
+# cluster using kmeans with k = 2
+k <- 2  # number of clusters
+iris_k <- kmeans(
+  iris %>% 
+    select(Petal.Length, Petal.Width), 
+  centers = k)
 
+# extract cluster assignment per observation
+Cluster = factor(iris_k$cluster)
 
+# extract cluster centers
+ctrs <- as.data.frame(iris_k$centers) %>% 
+  mutate(
+    Cluster = factor(1:k))
 
+# plot points with voronoi diagram showing nearest centroid
+ggplot(iris, aes(Petal.Length, Petal.Width, color = Cluster)) +
+  geom_point() + 
+  legend_pos +
+  geom_voronoi(
+    data = ctrs, aes(fill=Cluster), color = NA, alpha=0.5, outline = box) + 
+  geom_point(
+    data = ctrs, pch=23, cex=2, fill="black")
+```
 
+```{r}
+# cluster using kmeans with k = 8
+k <- 8  # number of clusters
+iris_k <- kmeans(
+  iris %>% 
+    select(Petal.Length, Petal.Width), 
+  centers = k)
+
+# extract cluster assignment per observation
+Cluster = factor(iris_k$cluster)
+
+# extract cluster centers
+ctrs <- as.data.frame(iris_k$centers) %>% 
+  mutate(
+    Cluster = factor(1:k))
+
+# plot points with voronoi diagram showing nearest centroid
+ggplot(iris, aes(Petal.Length, Petal.Width, color = Cluster)) +
+  geom_point() + 
+  legend_pos +
+  geom_voronoi(
+    data = ctrs, aes(fill=Cluster), color = NA, alpha=0.5, outline = box) + 
+  geom_point(
+    data = ctrs, pch=23, cex=2, fill="black")
 ```
 
 ### 1.2 Hierarchical Clustering
 
-Next, you’ll cluster sites according to species composition. You’ll use the dune dataset from the vegan R package.
+Next, you’ll cluster sites according to species composition. You’ll use the `dune` dataset from the `vegan` R package.
 
 #### 1.2.1 Load dune dataset
 
@@ -177,6 +234,7 @@ data("dune")
 if (interactive())
   help(dune)
 ```
+
 Question: What are the rows and columns composed of in the dune data frame?
 
 **In the dune dataframe, the rows are composed of sites (n=20) and the columns are plant species (n=30).**
@@ -221,14 +279,13 @@ This output shows that sites A & B are mostly dissimilar, as they align perfectl
 
 #### 1.2.3 Bray-Curtis Dissimilarity on sites
 
-
-Let’s take a closer look at the Bray-Curtis Dissimilarity distance:
+Let’s take a closer look at the [Bray-Curtis Dissimilarity](https://en.wikipedia.org/wiki/Bray%E2%80%93Curtis_dissimilarity) distance:
 
 ![](images/bray_curtis_eqns.png)
 
 #### 1.2.4 Agglomerative hierarchical clustering on dune
 
-See text to accompany code: HOMLR 21.3.1 Agglomerative hierarchical clustering.
+See text to accompany code: HOMLR [21.3.1 Agglomerative hierarchical clustering.](https://bradleyboehmke.github.io/HOML/hierarchical.html#agglomerative-hierarchical-clustering)
 
 ```{r}
 # Dissimilarity matrix
