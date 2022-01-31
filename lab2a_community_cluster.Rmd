@@ -69,7 +69,7 @@ skim(iris)
  
 ```{r}
 # remove the rows with NAs
-penguins <- na.omit(iris)
+iris <- na.omit(iris)
 
 # plot petal length vs width, species naive
 ggplot(
@@ -107,7 +107,8 @@ iris_k
 # compare clusters with species (which were not used to cluster)
 table(iris_k$cluster, iris$Species)
 ```
-Question: How many observations could be considered “misclassified” if expecting petal length and width to differentiate between species?
+
+**Question: How many observations could be considered “misclassified” if expecting petal length and width to differentiate between species?**
 
 **6 observations could be considered "misclassified" if we expect petal length and width to differentiate between species.**
 
@@ -119,6 +120,10 @@ ggplot(iris, aes(Petal.Length, Petal.Width, color = Cluster)) +
   geom_point() + 
   legend_pos
 ```
+
+**Question: Comparing the observed species plot with 3 species with the kmeans() cluster plot with 3 clusters, where does this “unsupervised” kmeans() technique (that does not use species to “fit” the model) produce similar versus different results? One or two sentences would suffice. Feel free to mention ranges of values along the axes.**
+
+**Comparing the observed species plot with 3 species with the kmeans() cluster plot with 3 clusters, the "unsupervised" kmeans() technique (that does not use species to "fit" the model) produces the same results for the setosa species on the lower end of the x-axis for petal length (within the range of 0-2), as well as for most of the points for the versicolor species within the range of 3-5 for petal length and for the virginica species within the range of 5-7 for petal length. However, the "unsupervised" kmeans() technique produces different results for species versicolor and virginica right around the value of 5 for petal length. There are a few points misidentified as the other species in both directions.**
 
 #### 1.1.3 Plot Voronoi diagram of clustered iris
 
@@ -265,17 +270,21 @@ sites_euclidean <- vegdist(sites, method="euclidean")
 sites_euclidean
 ```
 
-Sites B & C have the largest euclidean distance between them. Sites A and C have the smallest euclidean distance between them. This makes sense because the values of 5 for the B site result in a larger quanititative difference from 0 than the values of 1 for the A site. 
+Sites B & C have the largest euclidean distance between them. Sites A and C have the smallest euclidean distance between them. This makes sense because the values of 5 for the B site result in a larger quantitative difference from 0 than the values of 1 for the A site. 
 
 ```{r}
 sites_bray <- vegdist(sites, method="bray")
 sites_bray
 ```
+**Question: In your own words, how does Bray Curtis differ from Euclidean distance? See sites_euclidean versus sites_bray from lab code, slides from Lecture 05. Clustering and reading Chapter 8 of Kindt and Coe (2005).**
 
+**Bray Curtis differs from Euclidean distance in that Bray Curtis shows that sites A & C are completely dissimilar, just as sites B & C are completely dissimilar. The site dissimilarity values range from 0-1. The Euclidean distance output shows that sites B & C are much more dissimilar than sites A & C. The Euclidean distance does not range from 0-1, but rather can take values larger than 1.
+
+Bray Curtis:
 1 = completely dissimilar
-0 = indentical
+0 = identical
 
-This output shows that sites A & B are mostly dissimilar, as they align perfectly with species 3, but are very dissimilar for species 1 & 2. Sites A & C are perfectly dissimilar as they are different (1 or 0) for every species. B & C are completely dissimilar as well, as they are different (5 or 0) for every species. This aligns with the euclidian results that showed that B & C have the largest distance between them. 
+This Bray Curtis output shows that sites A & B are mostly but not completely dissimilar, as they align perfectly with species 3, but are very dissimilar for species 1 & 2. The Bray Curtis output shows that sites A & C are perfectly dissimilar as they are different (1 or 0) for every species. B & C are completely dissimilar as well, as they are different (5 or 0) for every species.
 
 #### 1.2.3 Bray-Curtis Dissimilarity on sites
 
@@ -304,6 +313,10 @@ hc1 <- hclust(d, method = "complete" )
 plot(hc1, cex = 0.6, hang = -1)
 ```
 
+**Question: Which function comes first, vegdist() or hclust(), and why? See HOMLR 21.3.1 Agglomerative hierarchical clustering.**
+
+**We first compute the dissimilarity values with vegdist() (in this case, we use Bray Curtis dissimilarity) and then feed these values into hclust() and specify that we want to use the "complete" agglomeration method.**
+
 ```{r}
 # Compute agglomerative clustering with agnes
 hc2 <- agnes(dune, method = "complete")
@@ -316,6 +329,9 @@ hc2$ac
 # Dendrogram plot of hc2
 plot(hc2, which.plot = 2)
 ```
+**Question: In your own words how does hclust() differ from agnes()? See HOMLR 21.3.1 Agglomerative hierarchical clustering and help documentation (?hclust(), ?agnes()).**
+
+**hclust() differs from agnes() in that agnes also gives the agglomerative coefficient, which measures the amount of clustering structure found. Agglomerative coefficient values that are closer to 1 suggest a more balanced clustering structure like complete or ward, and values closer to 0 suggest poorly-informed clusters. The agglomerative coefficient is best applied to compare across data sets of similar sizes.**
 
 ```{r}
 # methods to assess
@@ -330,6 +346,12 @@ ac <- function(x) {
 # get agglomerative coefficient for each linkage method
 purrr::map_dbl(m, ac)
 ```
+
+**Question: Of the 4 methods, which is the “best” model in terms of Agglomerative Coefficient?**
+
+**The best model is ward in terms of the Agglomerative Coefficient.**
+
+![](images/agg_methods.png)
 
 ```{r}
 # Compute ward linkage clustering with agnes
