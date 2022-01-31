@@ -1,5 +1,5 @@
 ---
-title: "lab2b_community_ordination"
+title: "EDS232 Lab2b: Community Ordination"
 output: html_document
 ---
 
@@ -20,7 +20,9 @@ In this lab, you will play with **unsupervised classification** techniques while
     - Overlay with environmental gradients; and
     - **Constrained ordination** on species and environmnent using another ordination technique, **canonical correspondence analysis (CCA)**.
 
-Ordination
+## 1 Ordination
+
+**Ordination** orders sites near each other based on similarity. It is a multivariate analysis technique used to effectively collapse dependent axes into fewer dimensions, i.e. dimensionality reduction. It also falls into the class of **unsupervised learning** because a “response term” is not used to fit the model.
 
 ## Principal Components Analysis (PCA)
 
@@ -28,7 +30,7 @@ Although this example uses a non-ecological dataset, it goes through the materia
 
 Please read the entirety of [Chapter 17 Principal Components Analysis | Hands-On Machine Learning with R](https://bradleyboehmke.github.io/HOML/pca.html#finding-principal-components). Supporting text is mentioned below where code is run.
 
-### Prerequisites
+### 1.1.1 Prerequisites
 
 See supporting text: [17.1 Prerequisites](https://bradleyboehmke.github.io/HOML/pca.html#prerequisites-14)
 
@@ -64,7 +66,9 @@ See supporting text: [17.4 Performing PCA in R](https://bradleyboehmke.github.io
 ```{r}
 h2o.no_progress()  # turn off progress bars for brevity
 h2o.init(max_mem_size = "5g")  # connect to H2O instance
+```
 
+```{r}
 # convert data to h2o object
 my_basket.h2o <- as.h2o(my_basket)
 
@@ -77,13 +81,17 @@ my_pca <- h2o.prcomp(
   impute_missing = TRUE,
   max_runtime_secs = 1000)
 my_pca
+```
 
+```{r}
 my_pca@model$eigenvectors %>%
   as.data.frame() %>%
   mutate(feature = row.names(.)) %>%
   ggplot(aes(pc1, reorder(feature, pc1))) +
   geom_point()
+```
 
+```{r}
 my_pca@model$eigenvectors %>%
   as.data.frame() %>%
   mutate(feature = row.names(.)) %>%
@@ -105,10 +113,14 @@ eigen <- my_pca@model$importance["Standard deviation", ] %>%
 # Sum of all eigenvalues equals number of variables
 sum(eigen)
 ## [1] 42
+```
 
+```{r}
 # Find PCs where the sum of eigenvalues is greater than or equal to 1
 which(eigen >= 1)
+```
 
+```{r}
 # Extract PVE and CVE
 ve <- data.frame(
   PC  = my_pca@model$importance %>% seq_along(),
@@ -121,10 +133,14 @@ ve %>%
   ggplot(aes(PC, variance_explained)) +
   geom_point() +
   facet_wrap(~ metric, ncol = 1, scales = "free")
+```
 
+```{r}
 # How many PCs required to explain at least 75% of total variability
 min(which(ve$CVE >= 0.75))
+```
 
+```{r}
 # Screee plot criterion
 data.frame(
   PC  = my_pca@model$importance %>% seq_along,
@@ -136,9 +152,9 @@ data.frame(
 ```
 
 
-## Non-metric MultiDimensional Scaling (NMDS)
+## 1.2 Non-metric MultiDimensional Scaling (NMDS)
 
-### Unconstrained Ordination on Species
+### 1.2.1 Unconstrained Ordination on Species
 
 See supporting text: **2.1 Non-metric Multidimensional scaling** in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
 
@@ -152,20 +168,29 @@ data("varespec") # species
 data("varechem") # chemistry
 
 varespec %>% tibble()
+```
+
+```{r}
 vare.dis <- vegdist(varespec)
 vare.mds0 <- monoMDS(vare.dis)
 stressplot(vare.mds0)
+```
 
+```{r}
 ordiplot(vare.mds0, type = "t")
+```
 
+```{r}
 vare.mds <- metaMDS(varespec, trace = FALSE)
 vare.mds
+```
 
+```{r}
 plot(vare.mds, type = "t")
 ```
 
 
-### Overlay with Environment
+### 1.2.2 Overlay with Environment
 
 See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
   * 3 Environmental interpretation
@@ -175,11 +200,14 @@ See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/m
 ```{r}
 ef <- envfit(vare.mds, varechem, permu = 999)
 ef
+```
 
+```{r}
 plot(vare.mds, display = "sites")
 plot(ef, p.max = 0.05)
+```
 
-
+```{r}
 ef <- envfit(vare.mds ~ Al + Ca, data = varechem)
 plot(vare.mds, display = "sites")
 plot(ef)
@@ -189,7 +217,7 @@ ordisurf(vare.mds ~ Ca, data=varechem, add = TRUE, col = "green4")
 ```
 
 
-### Constrained Ordination on Species and Environment
+### 1.2.3 Constrained Ordination on Species and Environment
 
 See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
   * 4 Constrained ordination
@@ -201,17 +229,38 @@ Technically, this uses another technique `cca`, or canonical correspondence anal
 # ordinate on species constrained by three soil elements
 vare.cca <- cca(varespec ~ Al + P + K, varechem)
 vare.cca
+```
 
+```{r}
 # plot ordination
 plot(vare.cca)
+```
 
+```{r}
 # plot 3 dimensions
 ordiplot3d(vare.cca, type = "h")
+```
 
+```{r}
 if (interactive()){
   ordirgl(vare.cca)
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
