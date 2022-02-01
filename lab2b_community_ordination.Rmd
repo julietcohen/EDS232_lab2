@@ -83,6 +83,14 @@ my_pca <- h2o.prcomp(
 my_pca
 ```
 
+**Question: Why is the pca_method of “GramSVD” chosen over “GLRM”? See HOMLR 17.4 Performing PCA in R.**
+
+**The pca_method of "GramSVD" is chosen over GLRM because our data contains mostly numeric data, and GLRM would be applied if the data was mostly categorical.**
+
+**Question: How many initial principal components are chosen with respect to dimensions of the input data? See HOMLR 17.4 Performing PCA in R.**
+
+**The number of initial principal components that are chosen with respect to dimensions of the input data is the total number of columns in `my_basket.h2o`, which is 42.**
+
 ```{r}
 my_pca@model$eigenvectors %>%
   as.data.frame() %>%
@@ -91,6 +99,10 @@ my_pca@model$eigenvectors %>%
   geom_point()
 ```
 
+**Question: What category of grocery items contribute most to PC1? (These are related because they're bought most often together on a given grocery trip)**
+
+**The `adult beverages` contribute most to PC1**
+
 ```{r}
 my_pca@model$eigenvectors %>%
   as.data.frame() %>%
@@ -98,6 +110,10 @@ my_pca@model$eigenvectors %>%
   ggplot(aes(pc1, pc2, label = feature)) +
   geom_text()
 ```
+
+**Question: What category of grocery items contribute the least to PC1 but positively towards PC2?**
+
+**The category of grocery items that contributes the least to PC1 but positively towards PC2 is healthy fresh foods such carrots, spinach, leeks, etc.**
 
 ### Eigenvalue criterion
 
@@ -135,6 +151,10 @@ ve %>%
   facet_wrap(~ metric, ncol = 1, scales = "free")
 ```
 
+**Question: How many principal components would you include to explain 90% of the total variance?**
+
+**35 principal components would explain 90% of the total variance.**
+
 ```{r}
 # How many PCs required to explain at least 75% of total variability
 min(which(ve$CVE >= 0.75))
@@ -151,6 +171,13 @@ data.frame(
   geom_text(nudge_y = -.002)
 ```
 
+**Question: How many principal components to include up to the elbow of the PVE, i.e. the “elbow” before plateau of dimensions explaining the least variance?**
+
+**8 principal components are included up to the elbow of the PVE, before the line flattens out.**
+
+**Question: What are a couple of disadvantages to using PCA? See HOMLR 17.6 Final thoughts.**
+
+**Some disadvantages of using PCA are that PCA can be highly affected by outliers and PCA does not perform as well in very high dimensional space where complex nonlinear patterns often exist because the PC directions are linear.**
 
 ## 1.2 Non-metric MultiDimensional Scaling (NMDS)
 
@@ -170,15 +197,25 @@ data("varechem") # chemistry
 varespec %>% tibble()
 ```
 
+**Question: What are the dimensions of the varespec data frame and what do rows versus columns represent?**
+
+**The dimensions of the varispec dataframe are 24 rows by 44 columns. Columns describe species with scientific names. Rows represent sites.**
+
 ```{r}
 vare.dis <- vegdist(varespec)
 vare.mds0 <- monoMDS(vare.dis)
 stressplot(vare.mds0)
 ```
+**Question: The “stress” in a stressplot represents the difference between the observed inpnut distance versus the fitted ordination distance. How much better is the non-metric (i.e., NMDS) fit versus a linear fit (as with PCA) in terms of \(R^2\)?**
+
+**In terms of \(R^2\, the non-metric fit is better by a small margin, 0.047.**
 
 ```{r}
 ordiplot(vare.mds0, type = "t")
 ```
+**Question: What two sites are most dissimilar based on species composition for the first component MDS1? And two more most dissimilar sites for the second component MDS2?**
+
+**For the first component MDS1, the sites 28 and 5 are most dissimilar, and for the second component MDS2, the sites 21 and 14 are most dissimilar.**
 
 ```{r}
 vare.mds <- metaMDS(varespec, trace = FALSE)
@@ -189,6 +226,9 @@ vare.mds
 plot(vare.mds, type = "t")
 ```
 
+**Question: What is the basic difference between metaMDS and monoMDS()? See 2.1 Non-metric Multidimensional scaling of vegantutor.pdf.**
+
+**For non-metric multi-dimensional scaling, metaMDS uses several random starts and selects among similar solutions with the smallest stresses. monoMDS finds 2 dimensions and uses random configuration as the starting solution. The solution is iterative and there is no guaranteed convergence.
 
 ### 1.2.2 Overlay with Environment
 
@@ -207,6 +247,10 @@ plot(vare.mds, display = "sites")
 plot(ef, p.max = 0.05)
 ```
 
+**Question: What two soil chemistry elements have the strongest negative relationship with NMDS1 that is based on species composition?**
+
+**Al and Fe have the strongest negative relationship with NMDS1 that is based on species composition.**
+
 ```{r}
 ef <- envfit(vare.mds ~ Al + Ca, data = varechem)
 plot(vare.mds, display = "sites")
@@ -215,7 +259,9 @@ plot(ef)
 tmp <- with(varechem, ordisurf(vare.mds, Al, add = TRUE))
 ordisurf(vare.mds ~ Ca, data=varechem, add = TRUE, col = "green4")
 ```
+**Question: Which of the two NMDS axes differentiates Ca the most, i.e. has the highest value given by the contours at the end (and not middle) of the axis?**
 
+**NMDS1 differentiates Ca the most.**
 
 ### 1.2.3 Constrained Ordination on Species and Environment
 
@@ -230,11 +276,18 @@ Technically, this uses another technique `cca`, or canonical correspondence anal
 vare.cca <- cca(varespec ~ Al + P + K, varechem)
 vare.cca
 ```
+**Question: What is the difference between “constrained” versus “unconstrained” ordination within ecological context?**
+
+**Unconstrained ordination can be considered indirect gradient analysis; the potential effects of factors that generated the output patterns can only be interpreted indirectly because these factors were not included in the analysis. Constrained ordination can be considered to be direct gradient analysis because it examines relationships between sets of variables. Constrained ordination includes 2+ sets of ecological information into the analysis, such as animals recorded as well as the environmental characteristics in the same data set.**
 
 ```{r}
 # plot ordination
 plot(vare.cca)
 ```
+
+**Question: What sites are most differentiated by CCA1, i.e. furthest apart along its axis, based on species composition AND the environmnent? What is the strongest environmental vector for CCA1, i.e. longest environmental vector in the direction of the CCA1 axes?**
+
+**The sites that are most differentiated by CCA1 are 28 and 4. The strongest environmental vector in the direction of the CCA1 axis is Al.**
 
 ```{r}
 # plot 3 dimensions
