@@ -1,5 +1,5 @@
 ---
-title: "Lab2_Communities_Juliet_Cohen"
+title: "EDS232 Lab2: Communities"
 output: html_document
 ---
 
@@ -7,23 +7,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Lab 2a: Community Cluster
+
 ### Learning Objectives
 
 ### In this lab, you will play with unsupervised classification techniques while working with ecological community datasets.
 
-- Comparing species counts between sites using distance metrics:
-- Euclidean calculates the distance between a virtualized space using Pythagorean theorem.
-- Manhattan calculates integer “around the block” difference.
+- Comparing species counts between sites using distance metrics:\
+- Euclidean calculates the distance between a virtualized space using Pythagorean theorem.\
+- Manhattan calculates integer “around the block” difference.\
 - Bray-Curtis dissimilarity is based on the sum of lowest counts of shared species between sites over the sum of all species. A dissimilarity value of 1 is completely dissimilar, i.e. no species shared. A value of 0 is completely identical.
 
 ### Clustering
 
-K-Means clustering with function kmeans() given a pre-assigned number of clusters assigns membership centroid based on reducing within cluster variation.
-- Voronoi diagrams visualizes regions to nearest points, useful here to show membership of nodes to nearest centroid.
-Hierarchical clustering allows for a non-specific number of clusters.
-- Agglomerative hierarchical clustering, such as with diana(), agglomerates as it builds the tree. It is good at identifying small clusters.
-- Divisive hierarchical clustering, such as with agnes(), divides as it builds the tree. It is good at identifying large clusters.
-- Dendrograms visualize the branching tree.
+K-Means clustering with function kmeans() given a pre-assigned number of clusters assigns membership centroid based on reducing within cluster variation.\
+- Voronoi diagrams visualizes regions to nearest points, useful here to show membership of nodes to nearest centroid.\
+Hierarchical clustering allows for a non-specific number of clusters.\
+- Agglomerative hierarchical clustering, such as with diana(), agglomerates as it builds the tree. It is good at identifying small clusters.\
+- Divisive hierarchical clustering, such as with agnes(), divides as it builds the tree. It is good at identifying large clusters.\
+- Dendrograms visualize the branching tree.\
 Ordination (coming Monday)
 
 ## 1 Clustering
@@ -123,7 +125,7 @@ ggplot(iris, aes(Petal.Length, Petal.Width, color = Cluster)) +
 
 **Question: Comparing the observed species plot with 3 species with the kmeans() cluster plot with 3 clusters, where does this “unsupervised” kmeans() technique (that does not use species to “fit” the model) produce similar versus different results? One or two sentences would suffice. Feel free to mention ranges of values along the axes.**
 
-**Comparing the observed species plot with 3 species with the kmeans() cluster plot with 3 clusters, the "unsupervised" kmeans() technique (that does not use species to "fit" the model) produces the same results for the setosa species on the lower end of the x-axis for petal length (within the range of 0-2), as well as for most of the points for the versicolor species within the range of 3-5 for petal length and for the virginica species within the range of 5-7 for petal length. However, the "unsupervised" kmeans() technique produces different results for species versicolor and virginica right around the value of 5 for petal length. There are a few points misidentified as the other species in both directions.**
+**Comparing the observed species plot with 3 species with the kmeans() cluster plot with 3 clusters, the "unsupervised" kmeans() technique (that does not use species to "fit" the model) produces the same results for the setosa species on the lower end of the x-axis for petal length within the range of 0-2 and for petal width within the range of 0-0.6, as well as for most of the points for the versicolor species within the range of 3-5 for petal length and within the range of 1-1.75 for petal width, and for the virginica species within the range of 5-7 for petal length and within the range of 1.4-2.5 for petal width. However, the "unsupervised" kmeans() technique produces different results for species versicolor and virginica right around the value of 5 for petal length which corresponds to the value range of around 1.5-1.75 for petal width. There are a few points misidentified as the other species in both directions in this region. The color by species graph extends the versicolor range of petal width a little bit larger than shown in the "unsupervised" kmeans() plot.**
 
 #### 1.1.3 Plot Voronoi diagram of clustered iris
 
@@ -240,9 +242,11 @@ if (interactive())
   help(dune)
 ```
 
-Question: What are the rows and columns composed of in the dune data frame?
+**Question: What are the rows and columns composed of in the dune data frame?**
 
 **In the dune dataframe, the rows are composed of sites (n=20) and the columns are plant species (n=30).**
+
+- This is similar to how the grocery items data set uses columns for grocery items and rows for grocery trips in lab 2b.
 
 #### 1.2.2 Calculate Ecological Distances on sites
 
@@ -276,15 +280,11 @@ Sites B & C have the largest euclidean distance between them. Sites A and C have
 sites_bray <- vegdist(sites, method="bray")
 sites_bray
 ```
+The Bray Curtis output shows that sites A & B are mostly but not completely dissimilar, as they align perfectly with species 3, but are very dissimilar for species 1 & 2. The Bray Curtis output shows that sites A & C are perfectly dissimilar as they are different (1 or 0) for every species. B & C are completely dissimilar as well, as they are different (5 or 0) for every species. The Euclidean distance output shows that sites B & C are much more dissimilar than sites A & C.
+
 **Question: In your own words, how does Bray Curtis differ from Euclidean distance? See sites_euclidean versus sites_bray from lab code, slides from Lecture 05. Clustering and reading Chapter 8 of Kindt and Coe (2005).**
 
-**Bray Curtis differs from Euclidean distance in that Bray Curtis shows that sites A & C are completely dissimilar, just as sites B & C are completely dissimilar. The site dissimilarity values range from 0-1. The Euclidean distance output shows that sites B & C are much more dissimilar than sites A & C. The Euclidean distance does not range from 0-1, but rather can take values larger than 1.
-
-Bray Curtis:
-1 = completely dissimilar
-0 = identical
-
-This Bray Curtis output shows that sites A & B are mostly but not completely dissimilar, as they align perfectly with species 3, but are very dissimilar for species 1 & 2. The Bray Curtis output shows that sites A & C are perfectly dissimilar as they are different (1 or 0) for every species. B & C are completely dissimilar as well, as they are different (5 or 0) for every species.
+**Bray Curtis differs from Euclidean distance in that Euclidean distance  measures the distance between sites as the shortest path (a straight line), so it is best used for continuous data and reflects absolute distances, not just species shared between sites, while Bray Curtis is based on the sum of lowest counts of shared species between sites over all species. Bray Curtis takes a normalization method that defines completely dissimilar sites as 1 and identical sites as 0 and is best used for categorical data and reflects relative magnitudes. The Bray Curtis site dissimilarity values range from 0-1 while Euclidean distance is not limited to 1 as a maximum.**
 
 #### 1.2.3 Bray-Curtis Dissimilarity on sites
 
@@ -315,7 +315,7 @@ plot(hc1, cex = 0.6, hang = -1)
 
 **Question: Which function comes first, vegdist() or hclust(), and why? See HOMLR 21.3.1 Agglomerative hierarchical clustering.**
 
-**We first compute the dissimilarity values with vegdist() (in this case, we use Bray Curtis dissimilarity) and then feed these values into hclust() and specify that we want to use the "complete" agglomeration method.**
+**We first compute the dissimilarity values with vegdist() (in this case, we use Bray Curtis dissimilarity) and then feed these values into hclust() and specify that we want to use the "complete" agglomeration method. We use vegdist() first because this function does the actual computing of the dissimilarity indices, while the hclust() executes a hierarchial cluster analysis on this set of given dissimilarities.**
 
 ```{r}
 # Compute agglomerative clustering with agnes
@@ -349,7 +349,7 @@ purrr::map_dbl(m, ac)
 
 **Question: Of the 4 methods, which is the “best” model in terms of Agglomerative Coefficient?**
 
-**The best model is ward in terms of the Agglomerative Coefficient.**
+**The best model is ward in terms of the Agglomerative Coefficient. It has the highest AC.**
 
 ![](images/agg_methods.png)
 
@@ -380,7 +380,7 @@ hc4$dc
 
 **Question: In your own words how does agnes() differ from diana()? See HOMLR 21.3.1 Agglomerative hierarchical clustering, slides from Lecture 05. Clustering and help documentation (?agnes(), ?diana()).**
 
-**The Divisive clustering approach using `diana()` produced a smaller coefficient, (`r hc4$dc`), that represents clustering structure found, compared to the coefficient produced by the agglomerative approach using `agnes()` (`r hc3$ac`). A coefficient closer to 1 suggests stronger group distinctions. Values closer to 0 suggest less well-formed clusters such as the single linkage dendrogram. The agglomerative coefficient tends to become larger as n increases, so it should only be used to compre data sets of similar sizes. The agglomerative approach is better at identifying smaller groups, starting at the bottom of the dendrogram and moving up, so the clustering coefficient is larger. The divisive clustering method works in a top-down manner, beginning at the root.**
+**The Divisive clustering approach using `diana()` produced a smaller coefficient, (`r hc4$dc`), that represents clustering structure found, compared to the coefficient produced by the agglomerative approach using `agnes()` (`r hc3$ac`). A coefficient closer to 1 suggests stronger group distinctions. Values closer to 0 suggest less well-formed clusters such as the single linkage dendrogram. The agglomerative coefficient tends to become larger as n increases, so it should only be used to compre data sets of similar sizes. The agglomerative approach is better at identifying smaller groups, starting at the bottom of the dendrogram and moving up. The divisive clustering method works in a top-down manner, beginning at the root.**
 
 #### 1.2.6 Determining optimal clusters
 
@@ -445,7 +445,333 @@ fviz_dend(
 ```
 **Question: In dendrogram plots, which is the biggest determinant of relatedness between observations: the distance between observations along the labeled axes or the height of their shared connection? See HOMLR 21.5 Working with dendrograms.**
 
-**The bigger detemrinant of relatedness between observations is the height of their shared connection.**
+**The bigger determinant of relatedness between observations is the height of their shared connection.**
+
+## Lab 2b: Community Ordination
+
+# Learning Objectives {.unnumbered}
+
+In this lab, you will play with **unsupervised classification** techniques while working with **ecological community** datasets.
+
+- **Ordination** orders sites near each other based on similarity. It is a multivariate analysis technique used to effectively collapse dependent axes into fewer dimensions, i.e. dimensionality reduction.
+
+  - **Principal Components Analyses (PCA)** is the most common and oldest technique that assumes linear relationships between axes. You will follow a non-ecological example from [Chapter 17 Principal Components Analysis | Hands-On Machine Learning with R](https://bradleyboehmke.github.io/HOML/pca.html) to learn about this commonly used technique.
+
+  - **Non-metric MultiDimensional Scaling (NMDS)** allows for non-linear relationships. This ordination technique is implemented in the R package [`vegan`](https://cran.r-project.org/web/packages/vegan/index.html). You'll use an ecological dataset, species and environment from lichen pastures that reindeer forage upon, with excerpts from the [vegantutor vignette](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf) ([source](https://github.com/jarioksa/vegandocs)) to apply these techniques:
+    - **Unconstrained ordination** on species using NMDS;
+    - Overlay with environmental gradients; and
+    - **Constrained ordination** on species and environmnent using another ordination technique, **canonical correspondence analysis (CCA)**.
+
+## 1 Ordination
+
+**Ordination** orders sites near each other based on similarity. It is a multivariate analysis technique used to effectively collapse dependent axes into fewer dimensions, i.e. dimensionality reduction. It also falls into the class of **unsupervised learning** because a “response term” is not used to fit the model.
+
+## Principal Components Analysis (PCA)
+
+Although this example uses a non-ecological dataset, it goes through the materials walk through the idea and procedure of conducting an ordination using the most widespread technique.
+
+Please read the entirety of [Chapter 17 Principal Components Analysis | Hands-On Machine Learning with R](https://bradleyboehmke.github.io/HOML/pca.html#finding-principal-components). Supporting text is mentioned below where code is run.
+
+### 1.1.1 Prerequisites
+
+See supporting text: [17.1 Prerequisites](https://bradleyboehmke.github.io/HOML/pca.html#prerequisites-14)
+
+```{r}
+# load R packages
+librarian::shelf(
+  dplyr, ggplot2, h2o)
+
+# set seed for reproducible results
+set.seed(42)
+
+# get data
+url <- "https://koalaverse.github.io/homlr/data/my_basket.csv"
+my_basket <- readr::read_csv(url)
+dim(my_basket)
+
+my_basket
+```
+
+- 
+
+From [Section 1.4](https://bradleyboehmke.github.io/HOML/intro.html#data):
+
+- `my_basket.csv`: Grocery items and quantities purchased. Each observation represents a single basket of goods that were purchased together.
+  * Problem type: unsupervised basket analysis
+  * response variable: NA
+  * features: 42
+  * observations: 2,000
+  * objective: use attributes of each basket to identify common groupings of items purchased together.
+
+### Performing PCA in R
+
+See supporting text: [17.4 Performing PCA in R](https://bradleyboehmke.github.io/HOML/pca.html#performing-pca-in-r)
+
+```{r}
+h2o.no_progress()  # turn off progress bars for brevity
+h2o.init(max_mem_size = "5g")  # connect to H2O instance
+```
+
+```{r}
+# convert data to h2o object
+my_basket.h2o <- as.h2o(my_basket)
+
+# run PCA
+my_pca <- h2o.prcomp(
+  training_frame = my_basket.h2o,
+  pca_method = "GramSVD",
+  k = ncol(my_basket.h2o),
+  transform = "STANDARDIZE",
+  impute_missing = TRUE,
+  max_runtime_secs = 1000)
+my_pca
+```
+
+- the amount of additive variance explained by each column increases as you add the variance of each, but the first columns explain the most and as you add more columns, the amount of variation explained is less and less. By the 42nd column, 100% of the variance is explained.
+
+**Question: Why is the pca_method of “GramSVD” chosen over “GLRM”? See HOMLR 17.4 Performing PCA in R.**
+
+**The pca_method of "GramSVD" is chosen over GLRM because our data contains mostly numeric data, and GLRM would be applied if the data was mostly categorical.**
+
+**Question: How many initial principal components are chosen with respect to dimensions of the input data? See HOMLR 17.4 Performing PCA in R.**
+
+**The number of initial principal components that are chosen with respect to dimensions of the input data is the total number of columns in `my_basket.h2o`, which is 42.**
+
+```{r}
+my_pca@model$eigenvectors %>%
+  as.data.frame() %>%
+  mutate(feature = row.names(.)) %>%
+  ggplot(aes(pc1, reorder(feature, pc1))) +
+  geom_point()
+```
+
+**Question: What category of grocery items contribute most to PC1? (These are related because they're bought most often together on a given grocery trip)**
+
+**The `adult beverages` (alcohol) contribute most to PC1**
+
+- the positive and negative values on the x-axis creates spread that explains the most variation between sites\
+- By weighting these items, the sites that are most similar are closer together. Pay attention to the distance along the whole axis.
+- PC1 is a vector of coefficients
+
+```{r}
+my_pca@model$eigenvectors %>%
+  as.data.frame() %>%
+  mutate(feature = row.names(.)) %>%
+  ggplot(aes(pc1, pc2, label = feature)) +
+  geom_text()
+```
+
+**Question: What category of grocery items contribute the least to PC1 but positively towards PC2?**
+
+**The category of grocery items that contributes the least to PC1 but positively towards PC2 is vegetables and healthy fresh foods.**
+
+### Eigenvalue criterion
+
+See supporting text: [17.5.1 Eigenvalue criterion](https://bradleyboehmke.github.io/HOML/pca.html#eigenvalue-criterion).
+
+
+```{r}
+# Compute eigenvalues
+eigen <- my_pca@model$importance["Standard deviation", ] %>%
+  as.vector() %>%
+  .^2
+
+# Sum of all eigenvalues equals number of variables
+sum(eigen)
+## [1] 42
+```
+
+```{r}
+# Find PCs where the sum of eigenvalues is greater than or equal to 1
+which(eigen >= 1)
+```
+
+```{r}
+# Extract PVE and CVE
+ve <- data.frame(
+  PC  = my_pca@model$importance %>% seq_along(),
+  PVE = my_pca@model$importance %>% .[2,] %>% unlist(),
+  CVE = my_pca@model$importance %>% .[3,] %>% unlist())
+
+# Plot PVE and CVE
+ve %>%
+  tidyr::gather(metric, variance_explained, -PC) %>%
+  ggplot(aes(PC, variance_explained)) +
+  geom_point() +
+  facet_wrap(~ metric, ncol = 1, scales = "free")
+```
+
+**Question: How many principal components would you include to explain 90% of the total variance?**
+
+**36 principal components would explain 90% of the total variance.**
+
+```{r}
+# How many PCs required to explain at least 75% of total variability
+min(which(ve$CVE >= 0.75))
+```
+
+```{r}
+# Screee plot criterion
+data.frame(
+  PC  = my_pca@model$importance %>% seq_along,
+  PVE = my_pca@model$importance %>% .[2,] %>% unlist()) %>%
+  ggplot(aes(PC, PVE, group = 1, label = PC)) +
+  geom_point() +
+  geom_line() +
+  geom_text(nudge_y = -.002)
+```
+
+**Question: How many principal components to include up to the elbow of the PVE, i.e. the “elbow” before plateau of dimensions explaining the least variance?**
+
+**8 principal components are included up to the elbow of the PVE, before the line flattens out.**
+
+**Question: What are a couple of disadvantages to using PCA? See HOMLR 17.6 Final thoughts.**
+
+**Some disadvantages of using PCA are that PCA can be highly affected by outliers and PCA does not perform as well in very high dimensional space where complex nonlinear patterns often exist because the PC directions are linear.**
+
+## 1.2 Non-metric MultiDimensional Scaling (NMDS)
+
+### 1.2.1 Unconstrained Ordination on Species
+
+See supporting text: **2.1 Non-metric Multidimensional scaling** in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
+
+```{r}
+# load R packages
+librarian::shelf(
+  vegan, vegan3d)
+
+# vegetation and environment in lichen pastures from Vare et al (1995)
+data("varespec") # species
+data("varechem") # chemistry
+
+varespec %>% tibble()
+```
+
+**Question: What are the dimensions of the varespec data frame and what do rows versus columns represent?**
+
+**The dimensions of the varispec dataframe are 24 rows by 44 columns. Columns describe vegetation and environment. Rows represent sites (lichen pasture). Using ordination, we will reduce the complexity of all these columns.**
+
+```{r}
+vare.dis <- vegdist(varespec)
+vare.mds0 <- monoMDS(vare.dis)
+stressplot(vare.mds0)
+```
+
+**Question: The “stress” in a stressplot represents the difference between the observed inpnut distance versus the fitted ordination distance. How much better is the non-metric (i.e., NMDS) fit versus a linear fit (as with PCA) in terms of \(R^2\)?**
+
+**In terms of \(R^2\, the non-metric fit is better by a small margin, 0.047, which translates to about 5%. This difference in values shows the advantage of using the NMDS approach that fits non-linear relationships instead of using the more traditional ordination approach that assumes a linear fit.**
+
+```{r}
+ordiplot(vare.mds0, type = "t")
+```
+
+**Question: What two sites are most dissimilar based on species composition for the first component MDS1? And two more most dissimilar sites for the second component MDS2?**
+
+**For the first component MDS1, the sites 28 and 5 are most dissimilar, and for the second component MDS2, the sites 21 and 14 are most dissimilar.**
+
+```{r}
+vare.mds <- metaMDS(varespec, trace = FALSE)
+vare.mds
+```
+
+```{r}
+plot(vare.mds, type = "t")
+```
+
+**Question: What is the basic difference between metaMDS and monoMDS()? See 2.1 Non-metric Multidimensional scaling of vegantutor.pdf.**
+
+**For non-metric multi-dimensional scaling, metaMDS uses several random starts to run MDS and selects among similar solutions with the smallest stresses. monoMDS finds 2 dimensions and uses random configuration as the starting solution. The solution is iterative and there is no guaranteed convergence.**
+
+### 1.2.2 Overlay with Environment
+
+See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
+  * 3 Environmental interpretation
+  * 3.1 Vector fitting
+  * 3.2 Surface fitting
+
+```{r}
+ef <- envfit(vare.mds, varechem, permu = 999)
+ef
+```
+
+```{r}
+plot(vare.mds, display = "sites")
+plot(ef, p.max = 0.05)
+```
+
+**Question: What two soil chemistry elements have the strongest negative relationship with NMDS1 that is based on species composition?**
+
+**Al and Fe have the strongest negative relationship with NMDS1 that is based on species composition.**
+
+```{r}
+ef <- envfit(vare.mds ~ Al + Ca, data = varechem)
+plot(vare.mds, display = "sites")
+plot(ef)
+
+tmp <- with(varechem, ordisurf(vare.mds, Al, add = TRUE))
+ordisurf(vare.mds ~ Ca, data=varechem, add = TRUE, col = "green4")
+```
+**The ordination surface plot from ordisurf() displays contours of an environmental gradient across sites. It is a more detailed look at an environmental gradient compared to the single blue line vector. This environmental overlay is generated by fitting a GAM where the response is the environmental variable of interest and the predictors are a bivariate smooth of the ordination axes, all given by the formula: Ca ~ s(NMDS1, NMDS2) (Remember each site is associated with a position on the NMDS axes and has an environmental value).  We can see from the code that the green4 color contours are for Calcium Ca. Describe in general terms (upper/lower/left/right/middle) where the highest and lowest values are found for Ca with respect to the ordination axes NMDS1 and NMDS2 (ie the ordination axes that describe the most variation of species composition between sites).**
+
+**The highest values of Ca are found in the upper middle of the graph, as well as on the upper right. The Ca gradient is shown by the green contour lines and the highest value is 800 plotted on the upper middle, and similarly high values of 700 and 650 appear in the upper right. The lowest values of Ca are found in the lower left of the graph, with the lowest value being 300. Side note: the NMDS axes that plotted variation of species composition between sites used the Bray-Curtis method. The contour lines overlaid on top of the site points are considered to be a "fitted surface" of environmental variables. The direction of the Ca vector is pointing to the upper right because this is the direction of increase in this environmental variable across sites.**
+
+### 1.2.3 Constrained Ordination on Species and Environment
+
+See supporting text in [vegantutor.pdf](https://github.com/bbest/eds232-ml/raw/main/files/vegantutor.pdf):
+  * 4 Constrained ordination
+  * 4.1 Model specification
+
+Technically, this uses another technique `cca`, or canonical correspondence analysis.
+
+```{r}
+# ordinate on species constrained by three soil elements
+vare.cca <- cca(varespec ~ Al + P + K, varechem)
+vare.cca
+```
+**Question: What is the difference between “constrained” versus “unconstrained” ordination within ecological context?**
+
+**In unconstrained ordination we first determine the major compositional variation and relate it to the observed environmental variation. This can be considered indirect gradient analysis; the potential effects of factors that generated the output patterns can only be interpreted indirectly because these factors were not included in the analysis. Constrained ordination does not display all of the compositional variation, but rather the variation from the environmental variables (constraints). This can be considered to be direct gradient analysis because it examines relationships between sets of variables. Constrained ordination includes 2+ sets of ecological information into the analysis, such as animals recorded as well as the environmental characteristics in the same data set.**
+
+```{r}
+# plot ordination
+plot(vare.cca)
+```
+
+**Question: What sites are most differentiated by CCA1, i.e. furthest apart along its axis, based on species composition AND the environmnent? What is the strongest environmental vector for CCA1, i.e. longest environmental vector in the direction of the CCA1 axes?**
+
+**The sites that are most differentiated by CCA1 are 28 and 4. The strongest environmental vector in the direction of the CCA1 axis is Al.**
+
+```{r}
+# plot 3 dimensions
+ordiplot3d(vare.cca, type = "h")
+```
+
+```{r}
+if (interactive()){
+  ordirgl(vare.cca)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

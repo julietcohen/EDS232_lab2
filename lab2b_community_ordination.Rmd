@@ -50,6 +50,8 @@ dim(my_basket)
 my_basket
 ```
 
+- 
+
 From [Section 1.4](https://bradleyboehmke.github.io/HOML/intro.html#data):
 
 - `my_basket.csv`: Grocery items and quantities purchased. Each observation represents a single basket of goods that were purchased together.
@@ -83,6 +85,8 @@ my_pca <- h2o.prcomp(
 my_pca
 ```
 
+- the amount of additive variance explained by each column increases as you add the variance of each, but the first columns explain the most and as you add more columns, the amount of variation explained is less and less. By the 42nd column, 100% of the variance is exoplained.
+
 **Question: Why is the pca_method of “GramSVD” chosen over “GLRM”? See HOMLR 17.4 Performing PCA in R.**
 
 **The pca_method of "GramSVD" is chosen over GLRM because our data contains mostly numeric data, and GLRM would be applied if the data was mostly categorical.**
@@ -103,6 +107,9 @@ my_pca@model$eigenvectors %>%
 
 **The `adult beverages` contribute most to PC1**
 
+- the positive and negative values on the x-axis creates spread that explains the most variation between sites, the sign of the x-value does not mean anything. By weighting these items, the sites that are most similar are closer together. Pay attention to the distance along the whole axis.
+- PC1 is a vector of coefficients
+
 ```{r}
 my_pca@model$eigenvectors %>%
   as.data.frame() %>%
@@ -113,7 +120,7 @@ my_pca@model$eigenvectors %>%
 
 **Question: What category of grocery items contribute the least to PC1 but positively towards PC2?**
 
-**The category of grocery items that contributes the least to PC1 but positively towards PC2 is healthy fresh foods such carrots, spinach, leeks, etc.**
+**The category of grocery items that contributes the least to PC1 but positively towards PC2 is vegetables and healthy fresh foods such carrots, spinach, leeks, peas, etc.**
 
 ### Eigenvalue criterion
 

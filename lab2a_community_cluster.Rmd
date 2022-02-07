@@ -244,6 +244,8 @@ Question: What are the rows and columns composed of in the dune data frame?
 
 **In the dune dataframe, the rows are composed of sites (n=20) and the columns are plant species (n=30).**
 
+- This is similar to how the grocery items data set uses columns for grocery items and rows for grocery trips in lab 2b.
+
 #### 1.2.2 Calculate Ecological Distances on sites
 
 Before we calculate ecological distance between sites for dune, let’s look at these metrics with a simpler dataset, like the example given in Chapter 8 by Kindt and Coe (2005).
@@ -276,15 +278,11 @@ Sites B & C have the largest euclidean distance between them. Sites A and C have
 sites_bray <- vegdist(sites, method="bray")
 sites_bray
 ```
+The Bray Curtis output shows that sites A & B are mostly but not completely dissimilar, as they align perfectly with species 3, but are very dissimilar for species 1 & 2. The Bray Curtis output shows that sites A & C are perfectly dissimilar as they are different (1 or 0) for every species. B & C are completely dissimilar as well, as they are different (5 or 0) for every species. The Euclidean distance output shows that sites B & C are much more dissimilar than sites A & C.
+
 **Question: In your own words, how does Bray Curtis differ from Euclidean distance? See sites_euclidean versus sites_bray from lab code, slides from Lecture 05. Clustering and reading Chapter 8 of Kindt and Coe (2005).**
 
-**Bray Curtis differs from Euclidean distance in that Bray Curtis shows that sites A & C are completely dissimilar, just as sites B & C are completely dissimilar. The site dissimilarity values range from 0-1. The Euclidean distance output shows that sites B & C are much more dissimilar than sites A & C. The Euclidean distance does not range from 0-1, but rather can take values larger than 1.
-
-Bray Curtis:
-1 = completely dissimilar
-0 = identical
-
-This Bray Curtis output shows that sites A & B are mostly but not completely dissimilar, as they align perfectly with species 3, but are very dissimilar for species 1 & 2. The Bray Curtis output shows that sites A & C are perfectly dissimilar as they are different (1 or 0) for every species. B & C are completely dissimilar as well, as they are different (5 or 0) for every species.
+**Bray Curtis differs from Euclidean distance in that Euclidean distance uses the species as axes to plot each site and measures the distance between sites as the shortest path (a straight line), so it is best used for continuous data and reflects absolute distances, while Bray Curtis takes a normalization method that defines completely dissimilar sites as 1 and identical sites as 0 and is best used for categorical data and reflects relative magnitudes. The Bray Curtis site dissimilarity values range from 0-1 while Euclidean distance does not range from 0-1.**
 
 #### 1.2.3 Bray-Curtis Dissimilarity on sites
 
@@ -315,7 +313,7 @@ plot(hc1, cex = 0.6, hang = -1)
 
 **Question: Which function comes first, vegdist() or hclust(), and why? See HOMLR 21.3.1 Agglomerative hierarchical clustering.**
 
-**We first compute the dissimilarity values with vegdist() (in this case, we use Bray Curtis dissimilarity) and then feed these values into hclust() and specify that we want to use the "complete" agglomeration method.**
+**We first compute the dissimilarity values with vegdist() (in this case, we use Bray Curtis dissimilarity) and then feed these values into hclust() and specify that we want to use the "complete" agglomeration method. We use vegdist() first because this function does the actual computing of the dissimilarity indices, while the hclust() executes a hierarchial cluster analysis on this set of given dissimilarities.**
 
 ```{r}
 # Compute agglomerative clustering with agnes
